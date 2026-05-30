@@ -44,13 +44,19 @@ rules:
   resources:
   - checkpointschedules
   verbs:
+  - create
+  - delete
   - get
   - list
-  - watch
-  - create
-  - update
   - patch
-  - delete
+  - update
+  - watch
+- apiGroups:
+  - criu.org
+  resources:
+  - checkpointschedules/finalizers
+  verbs:
+  - update
 - apiGroups:
   - criu.org
   resources:
@@ -59,16 +65,3 @@ rules:
   - get
   - patch
   - update
-- apiGroups:
-  - criu.org
-  resources:
-  - checkpointschedules/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - nodes/proxy
-  verbs:
-  - get
-  - create
