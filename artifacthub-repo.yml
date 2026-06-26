@@ -1,0 +1,21 @@
+# Artifact Hub repository metadata file.
+# https://artifacthub.io/docs/topics/repositories/
+#
+# This file claims ownership of the published Helm repository on Artifact Hub.
+# It must be served at the root of the Helm repository (the GitHub Pages branch,
+# next to index.yaml). The release workflow copies it there.
+#
+# One-time setup:
+#   1. Sign in to https://artifacthub.io and add the repository (Helm type),
+#      pointing at https://checkpoint-restore.github.io/checkpoint-restore-operator
+#   2. Artifact Hub assigns a repositoryID. Paste it below and merge, so future
+#      ownership is verified automatically.
+#
+# repositoryID: <uuid-assigned-by-artifact-hub>
+owners:
+  - name: Adrian Reber
+    email: areber@redhat.com
+  - name: Prajwal S N
+    email: prajwalnadig21@gmail.com
+  - name: Radostin Stoyanov
+    email: rstoyanov@fedoraproject.org

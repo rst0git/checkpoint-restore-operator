@@ -1,0 +1,69 @@
+name: chart-release
+
+# Publishes the Helm chart to three channels when a chart release tag
+# (chart-v*) is pushed:
+#   1. OCI artifact on ghcr.io
+#   2. Classic Helm repository on GitHub Pages (via chart-releaser)
+#   3. Artifact Hub (reads the metadata published to GitHub Pages)
+#
+# ghcr.io needs no extra secret: the built-in GITHUB_TOKEN with packages:write
+# authenticates to the org's package registry. After the first publish, open the
+# package under the org's Packages tab and (optionally) set it public and link
+# it to this repository.
+
+on:
+  push:
+    tags:
+      - "chart-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write # chart-releaser creates GitHub releases and pushes to gh-pages
+  packages: write # push the OCI chart to ghcr.io
+
+jobs:
+  release:
+    if: ${{ github.repository == 'checkpoint-restore/checkpoint-restore-operator' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Log in to ghcr.io
+        run: helm registry login ghcr.io -u "$GITHUB_ACTOR" -p "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Package and push chart to ghcr.io (OCI)
+        run: |
+          mkdir -p .oci-package
+          helm package dist/chart --destination .oci-package
+          chart=$(ls .oci-package/*.tgz)
+          helm push "$chart" oci://ghcr.io/checkpoint-restore/charts
+
+      - name: Publish to GitHub Pages (chart-releaser)
+        uses: helm/chart-releaser-action@v1
+        with:
+          charts_dir: dist
+          skip_existing: true
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish artifacthub-repo.yml to gh-pages
+        run: |
+          git fetch origin gh-pages
+          git worktree add /tmp/gh-pages gh-pages
+          cp artifacthub-repo.yml /tmp/gh-pages/artifacthub-repo.yml
+          cd /tmp/gh-pages
+          if ! git diff --quiet; then
+            git add artifacthub-repo.yml
+            git commit -m "Update artifacthub-repo.yml"
+            git push origin gh-pages
+          fi
