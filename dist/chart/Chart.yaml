@@ -1,0 +1,50 @@
+apiVersion: v2
+name: checkpoint-restore-operator
+description: A Kubernetes operator that manages container checkpoint archives and automates forensic checkpointing using CRIU.
+type: application
+
+# version is the chart version (SemVer). Bump on any change to the chart.
+version: 0.1.0
+# appVersion is the version of the operator image deployed by the chart.
+# NOTE: The operator currently publishes only the "latest" image tag, so
+# values.yaml pins manager.image.tag to "latest". Once versioned operator
+# images are published, set manager.image.tag to "" so it tracks this value.
+appVersion: "0.1.0"
+
+home: https://github.com/checkpoint-restore/checkpoint-restore-operator
+sources:
+  - https://github.com/checkpoint-restore/checkpoint-restore-operator
+
+keywords:
+  - kubernetes
+  - operator
+  - criu
+  - checkpoint
+  - restore
+  - forensics
+  - migration
+
+maintainers:
+  - name: Adrian Reber
+    email: areber@redhat.com
+  - name: Prajwal S N
+    email: prajwalnadig21@gmail.com
+  - name: Radostin Stoyanov
+    email: rstoyanov@fedoraproject.org
+
+annotations:
+  # https://artifacthub.io/docs/topics/annotations/helm/
+  artifacthub.io/operator: "true"
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
+    - name: source
+      url: https://github.com/checkpoint-restore/checkpoint-restore-operator
+    - name: CRIU
+      url: https://criu.org
+  artifacthub.io/maintainers: |
+    - name: Adrian Reber
+      email: areber@redhat.com
+    - name: Prajwal S N
+      email: prajwalnadig21@gmail.com
+    - name: Radostin Stoyanov
+      email: rstoyanov@fedoraproject.org

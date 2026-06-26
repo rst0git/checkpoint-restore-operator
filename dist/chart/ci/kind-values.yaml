@@ -1,0 +1,13 @@
+# Values used to install the chart on a vanilla kind cluster in CI.
+#
+# A fresh kind node does not have /var/lib/kubelet/checkpoints pre-created, and
+# the default hostPath mount uses type: Directory (which requires the path to
+# already exist). Use DirectoryOrCreate so the install succeeds without extra
+# node setup. extraVolumeMounts is left at its default and still references the
+# kubelet-checkpoints volume by name.
+manager:
+  extraVolumes:
+    - name: kubelet-checkpoints
+      hostPath:
+        path: /var/lib/kubelet/checkpoints
+        type: DirectoryOrCreate

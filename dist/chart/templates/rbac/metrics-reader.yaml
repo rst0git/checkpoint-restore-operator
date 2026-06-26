@@ -1,0 +1,19 @@
+{{- if and .Values.metrics.enable .Values.metrics.secure }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: checkpoint-restore-operator
+    app.kubernetes.io/instance: metrics-reader
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/name: clusterrole
+    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    app.kubernetes.io/part-of: checkpoint-restore-operator
+  name: {{ include "checkpoint-restore-operator.resourceName" (dict "suffix" "metrics-reader" "context" $) }}
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+{{- end }}
