@@ -120,6 +120,45 @@ against a remote cluster.
 **Note:** Your controller will automatically use the current context in your
 *kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
+### Install with Helm
+
+The easiest way to install the operator is with the Helm chart. From the OCI
+registry:
+
+```sh
+helm install checkpoint-restore-operator \
+  oci://ghcr.io/checkpoint-restore/charts/checkpoint-restore-operator \
+  --namespace checkpoint-restore-operator-system --create-namespace
+```
+
+Or from the Helm repository hosted on GitHub Pages:
+
+```sh
+helm repo add checkpoint-restore \
+  https://checkpoint-restore.github.io/checkpoint-restore-operator
+helm install checkpoint-restore-operator checkpoint-restore/checkpoint-restore-operator \
+  --namespace checkpoint-restore-operator-system --create-namespace
+```
+
+See [`dist/chart/README.md`](dist/chart/README.md) for the full list of
+configurable values.
+
+The chart is generated from the `config/` kustomize bases with the kubebuilder
+`helm/v2-alpha` plugin. After changing anything under `config/`, regenerate it
+with:
+
+```sh
+make manifests generate
+kubebuilder edit --plugins=helm/v2-alpha --force
+```
+
+After regenerating, re-apply the chart's manual edits (`Chart.yaml` metadata,
+the `manager.image` default in `values.yaml`, and the de-duplicated
+`extraVolumes`/`extraVolumeMounts` blocks in
+`templates/manager/manager.yaml`), then run `helm lint dist/chart`. The plugin
+also re-scaffolds a `.github/workflows/test-chart.yml`; this repository uses
+`.github/workflows/chart-lint.yml` instead, so delete the regenerated file.
+
 ### Running on the Cluster
 
 1. Install Instances of Custom Resources:
