@@ -37,6 +37,9 @@ spec:
       containers:
         - name: cri-proxy
           image: ghcr.io/checkpoint-restore/checkpoint-restore-operator/cri-proxy:latest
+          # IfNotPresent so a locally-built/imported image (e.g. on a single node)
+          # is used instead of always pulling from a registry.
+          imagePullPolicy: IfNotPresent
           args:
             - --upstream=/run/containerd/containerd.sock
             - --listen=/run/cr-restore-proxy/cri-proxy.sock
