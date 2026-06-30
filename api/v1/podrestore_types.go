@@ -35,8 +35,12 @@ const RestoreCheckpointPathAnnotationPrefix = "restore.criu.org/checkpoint-path.
 // archive it should be restored from.
 type ContainerCheckpoint struct {
 	// Container is the name of the container in the template to restore.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	Container string `json:"container"`
 	// Path is the absolute path to the checkpoint .tar archive on the target node.
+	// +kubebuilder:validation:Pattern=`^/.*\.tar$`
+	// +kubebuilder:validation:MaxLength=4096
 	Path string `json:"path"`
 }
 
@@ -44,11 +48,17 @@ type ContainerCheckpoint struct {
 type PodRestoreSpec struct {
 	// TargetNode is the node that holds the checkpoint archives. The restored Pod
 	// is pinned to this node because the archives are node-local.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=253
 	TargetNode string `json:"targetNode"`
 
 	// Checkpoints maps each container to restore to its on-node checkpoint archive.
 	// Containers in the template that are not listed here are started normally.
+	// The list is keyed by container name, so each container may appear once.
 	// +kubebuilder:validation:MinItems=1
+	// +kubebuilder:validation:MaxItems=32
+	// +listType=map
+	// +listMapKey=container
 	Checkpoints []ContainerCheckpoint `json:"checkpoints"`
 
 	// Template is the PodTemplateSpec describing the restored workload. The

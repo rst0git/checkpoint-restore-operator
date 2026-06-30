@@ -157,4 +157,48 @@ var _ = Describe("PodRestoreReconciler", func() {
 		// With the finalizer gone, the fake client purges the object.
 		Expect(apierrors.IsNotFound(err)).To(BeTrue())
 	})
+
+	It("only restores listed containers; sidecars start normally", func() {
+		pr := newPodRestore()
+		pr.Spec.Template.Spec.Containers = append(pr.Spec.Template.Spec.Containers,
+			corev1.Container{Name: "sidecar", Image: "busybox:latest"})
+		r := makeReconciler(pr)
+		reconcileN(r, 3)
+
+		pod := &corev1.Pod{}
+		Expect(r.Get(context.Background(), types.NamespacedName{Name: name, Namespace: ns}, pod)).To(Succeed())
+		// Restored container is annotated; sidecar is not, and keeps its image.
+		Expect(pod.Annotations).To(HaveKey(criuorgv1.RestoreCheckpointPathAnnotationPrefix + "redis"))
+		Expect(pod.Annotations).NotTo(HaveKey(criuorgv1.RestoreCheckpointPathAnnotationPrefix + "sidecar"))
+		Expect(pod.Spec.Containers[1].Image).To(Equal("busybox:latest"))
+	})
+
+	It("fails on an unsafe checkpoint path", func() {
+		pr := newPodRestore()
+		pr.Spec.Checkpoints[0].Path = "/var/lib/kubelet/checkpoints/../../etc/shadow.tar"
+		r := makeReconciler(pr)
+		reconcileN(r, 3)
+
+		out := get(r)
+		Expect(out.Status.Phase).To(Equal(criuorgv1.RestorePhaseFailed))
+		Expect(out.Status.Message).To(ContainSubstring("must be clean"))
+	})
+
+	DescribeTable("validateCheckpointPath",
+		func(path string, ok bool) {
+			err := validateCheckpointPath(path)
+			if ok {
+				Expect(err).NotTo(HaveOccurred())
+			} else {
+				Expect(err).To(HaveOccurred())
+			}
+		},
+		Entry("absolute .tar", "/var/lib/kubelet/checkpoints/cp.tar", true),
+		Entry("empty", "", false),
+		Entry("relative", "checkpoints/cp.tar", false),
+		Entry("traversal", "/var/lib/kubelet/checkpoints/../x.tar", false),
+		Entry("double slash", "/var//lib/cp.tar", false),
+		Entry("not a tar", "/var/lib/kubelet/checkpoints/cp.img", false),
+		Entry("trailing slash", "/var/lib/cp.tar/", false),
+	)
 })

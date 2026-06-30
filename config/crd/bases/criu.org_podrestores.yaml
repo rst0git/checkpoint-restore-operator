@@ -56,6 +56,7 @@ spec:
                 description: |-
                   Checkpoints maps each container to restore to its on-node checkpoint archive.
                   Containers in the template that are not listed here are started normally.
+                  The list is keyed by container name, so each container may appear once.
                 items:
                   description: |-
                     ContainerCheckpoint maps a container in the Pod template to the checkpoint
@@ -64,21 +65,31 @@ spec:
                     container:
                       description: Container is the name of the container in the template
                         to restore.
+                      maxLength: 253
+                      minLength: 1
                       type: string
                     path:
                       description: Path is the absolute path to the checkpoint .tar
                         archive on the target node.
+                      maxLength: 4096
+                      pattern: ^/.*\.tar$
                       type: string
                   required:
                   - container
                   - path
                   type: object
+                maxItems: 32
                 minItems: 1
                 type: array
+                x-kubernetes-list-map-keys:
+                - container
+                x-kubernetes-list-type: map
               targetNode:
                 description: |-
                   TargetNode is the node that holds the checkpoint archives. The restored Pod
                   is pinned to this node because the archives are node-local.
+                maxLength: 253
+                minLength: 1
                 type: string
               template:
                 description: |-

@@ -96,6 +96,10 @@ The systemd deployment uses socket activation, so the kubelet can connect to the
 CRI socket even if the proxy process is still starting or has just restarted;
 systemd starts the service and queues the connection until the proxy accepts it.
 
+`make deploy` installs the admission policy that reserves the restore
+annotations for the PodRestore controller. If you install manifests manually,
+also apply `config/admission`.
+
 ## Security
 
 The proxy speaks to the runtime socket and the restore lets a Pod run from
@@ -105,3 +109,8 @@ arbitrary checkpoint state, so:
   `0600`).
 - Restrict who may create `PodRestore` resources (RBAC), since a restore runs a
   frozen process image as a Pod.
+- Keep the default `ValidatingAdmissionPolicy` installed. It denies direct use
+  of `restore.criu.org/checkpoint-path.*` on ordinary Pods and allows the
+  operator service account to create the annotated restore Pod. If you customize
+  the deployment namespace or service account name, update the policy expression
+  in `config/admission/restore_annotation_policy.yaml`.

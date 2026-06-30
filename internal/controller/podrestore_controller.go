@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	metadata "github.com/checkpoint-restore/checkpointctl/lib"
@@ -183,6 +184,9 @@ func (r *PodRestoreReconciler) renderPod(logger logr.Logger, pr *criuorgv1.PodRe
 	pod.Labels[podRestoreLabel] = pr.Name
 
 	for _, cp := range pr.Spec.Checkpoints {
+		if err := validateCheckpointPath(cp.Path); err != nil {
+			return nil, fmt.Errorf("container %q: %w", cp.Container, err)
+		}
 		idx := containerIndex(pod.Spec.Containers, cp.Container)
 		if idx < 0 {
 			return nil, fmt.Errorf("container %q is not defined in the Pod template", cp.Container)
@@ -228,6 +232,26 @@ func setReady(s *criuorgv1.PodRestoreStatus, status metav1.ConditionStatus, reas
 		Reason:  reason,
 		Message: message,
 	})
+}
+
+// validateCheckpointPath rejects paths that are unsafe to hand to the node-side
+// restore mechanism: it requires an absolute, lexically-clean path (no "." or
+// ".." traversal) ending in .tar. This is defense in depth alongside the CRD's
+// schema validation and mirrors the runtime's own checkpoint-archive checks.
+func validateCheckpointPath(p string) error {
+	if p == "" {
+		return fmt.Errorf("checkpoint path is empty")
+	}
+	if !filepath.IsAbs(p) {
+		return fmt.Errorf("checkpoint path %q must be absolute", p)
+	}
+	if filepath.Clean(p) != p {
+		return fmt.Errorf("checkpoint path %q must be clean (no '.', '..', or redundant separators)", p)
+	}
+	if filepath.Ext(p) != ".tar" {
+		return fmt.Errorf("checkpoint path %q must be a .tar archive", p)
+	}
+	return nil
 }
 
 func containerIndex(containers []corev1.Container, name string) int {
